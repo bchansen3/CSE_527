@@ -1,0 +1,106 @@
+---
+title: "CSE-527"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Install Packages
+
+```{r cars}
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(Seurat,patchwork,  dplyr, mosaicData, tibble, tidyr, stringr, purrr)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r add files, echo=FALSE}
+
+gen_direct = "~/CSE_527/data/"
+day2_1 <- Read10X(data.dir = paste0(gen_direct,"/day2/rep1/"))
+day2_2 <- Read10X(data.dir = paste0(gen_direct,"/day2/rep2/"))
+
+day7_1 <- Read10X(data.dir = paste0(gen_direct,"/day7/rep1/"))
+day7_2 <- Read10X(data.dir = paste0(gen_direct,"/day7/rep2/"))
+
+```
+
+```{r make objects}
+
+day2_1 <- CreateSeuratObject(counts = day2_1, project = "day2")
+day2_2 <- CreateSeuratObject(counts = day2_2, project = "day2")
+
+day7_1 <- CreateSeuratObject(counts = day7_1, project = "day7")
+day7_2 <- CreateSeuratObject(counts = day7_2, project = "day7")
+
+
+```
+
+merge replicates
+
+```{r merge}
+
+day2 <- merge(day2_1, y = day2_2, add.cell.ids = c("rep1", "rep2"), project = "day2")
+day7 <- merge(day7_1, y = day7_2, add.cell.ids = c("rep1", "rep2"), project = "day7")
+
+```
+
+mitochondrial gene filter
+
+```{r mito}
+
+day2[["percent.mt"]] <- PercentageFeatureSet(day2, pattern = "^mt-")
+day7[["percent.mt"]] <- PercentageFeatureSet(day7, pattern = "^mt-")
+
+VlnPlot(day2, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+VlnPlot(day7, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+```
+
+```{r filters}
+
+#same as in paper (https://www-ncbi-nlm-nih-gov.offcampus.lib.washington.edu/pmc/articles/PMC7033731/)
+
+day2 <- subset(day2, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 5)
+
+day7 <- subset(day7, subset = nFeature_RNA > 200 & nFeature_RNA < 6000 & percent.mt < 5)
+
+```
+
+```{r regress}
+
+day2 <- SCTransform(day2, vars.to.regress = "percent.mt", verbose = FALSE)
+
+day7 <- SCTransform(day7, vars.to.regress = "percent.mt", verbose = FALSE)
+```
+
+
+```{r dim reduction day2}
+
+# These are now standard steps in the Seurat workflow for visualization and clustering
+day2 <- RunPCA(day2, verbose = FALSE)
+day2 <- RunUMAP(day2, dims = 1:30, verbose = FALSE)
+
+day2 <- FindNeighbors(day2, dims = 1:30, verbose = FALSE)
+day2 <- FindClusters(day2, verbose = FALSE)
+DimPlot(day2, label = TRUE) + NoLegend()
+
+```
+
+
+```{r dim reduction day7}
+
+# These are now standard steps in the Seurat workflow for visualization and clustering
+day7 <- RunPCA(day7, verbose = FALSE)
+day7 <- RunUMAP(day7, dims = 1:30, verbose = FALSE)
+
+day7 <- FindNeighbors(day7, dims = 1:30, verbose = FALSE)
+day7 <- FindClusters(day7, verbose = FALSE)
+DimPlot(day7, label = TRUE) + NoLegend()
+
+```
