@@ -104,3 +104,60 @@ day7 <- FindClusters(day7, verbose = FALSE)
 DimPlot(day7, label = TRUE) + NoLegend()
 
 ```
+
+
+
+```{r workup}
+
+day2 <- FindVariableFeatures(day2, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+day2top10 <- head(VariableFeatures(day2), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(day2)
+plot2 <- LabelPoints(plot = plot1, points = day2top10, repel = TRUE)
+plot2
+
+```
+
+
+```{r workup}
+
+day7 <- FindVariableFeatures(day7, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 10 most highly variable genes
+day7top10 <- head(VariableFeatures(day7), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(day7)
+plot2 <- LabelPoints(plot = plot1, points = day7top10, repel = TRUE)
+plot2
+
+```
+
+
+
+
+```{r day2 markers}
+
+day2_markers <- FindAllMarkers(day2, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+day2_markers %>%
+    group_by(cluster) %>%
+    slice_max(n = 2, order_by = avg_log2FC)
+
+```
+
+
+
+```{r day2 markers}
+
+day7_markers <- FindAllMarkers(day7, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+day7_markers %>%
+    group_by(cluster) %>%
+    slice_max(n = 2, order_by = avg_log2FC)
+
+```
+
+
+
